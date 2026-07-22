@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Migrador DNS: Cloudflare -> Azion</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #0f172a;
+      color: #f8fafc;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .card {
+      background: #1e293b;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      width: 100%;
+      max-width: 480px;
+    }
+    h2 {
+      margin-top: 0;
+      color: #f97316;
+      font-size: 1.5rem;
+      text-align: center;
+    }
+    p {
+      font-size: 0.875rem;
+      color: #94a3b8;
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 0.4rem;
+      color: #cbd5e1;
+    }
+    input {
+      width: 100%;
+      padding: 0.75rem;
+      border-radius: 6px;
+      border: 1px solid #334155;
+      background: #0f172a;
+      color: #fff;
+      font-size: 0.9rem;
+      box-sizing: border-box;
+    }
+    input:focus {
+      outline: none;
+      border-color: #f97316;
+    }
+    button {
+      width: 100%;
+      padding: 0.85rem;
+      border: none;
+      border-radius: 6px;
+      background: #f97316;
+      color: #fff;
+      font-weight: bold;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: #ea580c;
+    }
+    button:disabled {
+      background: #64748b;
+      cursor: not-allowed;
+    }
+    #status {
+      margin-top: 1rem;
+      padding: 0.75rem;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      text-align: center;
+      display: none;
+    }
+    .success {
+      background: #065f46;
+      color: #34d399;
+    }
+    .error {
+      background: #991b1b;
+      color: #fca5a5;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h2>Migrador de DNS</h2>
+    <p>Exporte registros da Cloudflare e importe diretamente na Azion</p>
+
+    <form id="dnsForm">
+      <div class="form-group">
+        <label for="cf_token">Cloudflare Token</label>
+        <input type="password" id="cf_token" required placeholder="Bearer Token" autocomplete="off" />
+      </div>
+
+      <div class="form-group">
+        <label for="cf_zone_id">Cloudflare Zone ID</label>
+        <input type="text" id="cf_zone_id" required placeholder="32 caracteres hex" />
+      </div>
+
+      <div class="form-group">
+        <label for="azion_token">Azion Token</label>
+        <input type="password" id="azion_token" required placeholder="TOKEN azion..." autocomplete="off" />
+      </div>
+
+      <div class="form-group">
+        <label for="azion_zone_id">Azion Zone ID</label>
+        <input type="text" id="azion_zone_id" required placeholder="Ex: 7204" />
+      </div>
+
+      <button type="submit" id="btnSubmit">Iniciar Migração</button>
+    </form>
+
+    <div id="status"></div>
+  </div>
+
+  <script>
+    const N8N_WEBHOOK_URL = "https://n8n-revops.azion.net/webhook/6b69357c-6d77-47f9-84c9-2658528cd542";
+
+    document.getElementById("dnsForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      
+      const btn = document.getElementById("btnSubmit");
+      const status = document.getElementById("status");
+
+      btn.disabled = true;
+      btn.innerText = "Processando migração...";
+      status.style.display = "none";
+
+      const payload = {
+        "Cloudflare Token": document.getElementById("cf_token").value.trim(),
+        "Cloudflare Zone ID": document.getElementById("cf_zone_id").value.trim(),
+        "Azion Token": document.getElementById("azion_token").value.trim(),
+        "Azion Zone ID": document.getElementById("azion_zone_id").value.trim()
+      };
+
+      try {
+        const response = await fetch(N8N_WEBHOOK_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+          status.className = "success";
+          status.innerText = "🚀 Migração enviada para o n8n com sucesso!";
+        } else {
+          throw new Error("Erro na resposta do servidor.");
+        }
+      } catch (err) {
+        status.className = "error";
+        status.innerText = "❌ Falha ao acionar a migração. Verifique os dados fornecidos.";
+      } finally {
+        status.style.display = "block";
+        btn.disabled = false;
+        btn.innerText = "Iniciar Migração";
+      }
+    });
+  </script>
+</body>
+</html>
