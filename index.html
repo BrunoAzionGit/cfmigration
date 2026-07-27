@@ -1,176 +1,307 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Migrador DNS: Cloudflare -> Azion</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Azion Implementation Portal | SA, Partners & Clients</title>
   <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background: #0f172a;
-      color: #f8fafc;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
+    :root {
+      --azion-orange: #f36523;
+      --azion-dark: #1c1c1c;
+      --bg-gray: #f8f9fa;
+      --card-border: #e1e4e8;
+      --text-muted: #6c757d;
+      --tag-bg: #eef1f6;
+    }
+
+    * {
+      box-sizing: border-box;
       margin: 0;
+      padding: 0;
     }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background-color: var(--bg-gray);
+      color: #333;
+      line-height: 1.6;
+    }
+
+    header {
+      background-color: var(--azion-dark);
+      color: white;
+      padding: 2.5rem 1rem;
+      text-align: center;
+      border-bottom: 4px solid var(--azion-orange);
+    }
+
+    header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    header p {
+      color: #ccc;
+      font-size: 1rem;
+    }
+
+    .badge {
+      background-color: var(--azion-orange);
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-blue {
+      background-color: #0056b3;
+    }
+
+    main {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+    }
+
+    .intro {
+      background: white;
+      padding: 1.5rem 2rem;
+      border-radius: 8px;
+      border: 1px solid var(--card-border);
+      margin-bottom: 2.5rem;
+    }
+
+    .intro h2 {
+      font-size: 1.3rem;
+      color: var(--azion-dark);
+      margin-bottom: 0.5rem;
+    }
+
+    .section-title {
+      font-size: 1.4rem;
+      color: var(--azion-dark);
+      margin-bottom: 1.5rem;
+      border-bottom: 2px solid var(--card-border);
+      padding-bottom: 0.5rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 3rem;
+    }
+
     .card {
-      background: #1e293b;
-      padding: 2rem;
-      border-radius: 12px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-      width: 100%;
-      max-width: 480px;
+      background: white;
+      border-radius: 8px;
+      border: 1px solid var(--card-border);
+      padding: 1.75rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
-    h2 {
-      margin-top: 0;
-      color: #f97316;
-      font-size: 1.5rem;
-      text-align: center;
+
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
     }
-    p {
-      font-size: 0.875rem;
-      color: #94a3b8;
-      text-align: center;
+
+    .card-header {
+      margin-bottom: 1rem;
+    }
+
+    .card-title {
+      font-size: 1.25rem;
+      color: var(--azion-dark);
+      margin-top: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .card-description {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 1.2rem;
+    }
+
+    .feature-list {
+      list-style: none;
+      font-size: 0.85rem;
       margin-bottom: 1.5rem;
     }
-    .form-group {
-      margin-bottom: 1.25rem;
+
+    .feature-list li {
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: flex-start;
     }
-    label {
-      display: block;
-      font-size: 0.85rem;
-      font-weight: 600;
-      margin-bottom: 0.4rem;
-      color: #cbd5e1;
-    }
-    input {
-      width: 100%;
-      padding: 0.75rem;
-      border-radius: 6px;
-      border: 1px solid #334155;
-      background: #0f172a;
-      color: #fff;
-      font-size: 0.9rem;
-      box-sizing: border-box;
-    }
-    input:focus {
-      outline: none;
-      border-color: #f97316;
-    }
-    button {
-      width: 100%;
-      padding: 0.85rem;
-      border: none;
-      border-radius: 6px;
-      background: #f97316;
-      color: #fff;
+
+    .feature-list li::before {
+      content: "✓";
+      color: var(--azion-orange);
       font-weight: bold;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: background 0.2s;
+      margin-right: 8px;
+      line-height: 1.4;
     }
-    button:hover {
-      background: #ea580c;
+
+    .notes-box {
+      background-color: var(--tag-bg);
+      border-left: 3px solid var(--azion-orange);
+      padding: 0.75rem 1rem;
+      font-size: 0.82rem;
+      color: #444;
+      border-radius: 0 4px 4px 0;
+      margin-bottom: 1.5rem;
     }
-    button:disabled {
-      background: #64748b;
-      cursor: not-allowed;
+
+    .notes-box strong {
+      color: var(--azion-dark);
+      display: block;
+      margin-bottom: 0.2rem;
     }
-    #status {
-      margin-top: 1rem;
-      padding: 0.75rem;
-      border-radius: 6px;
-      font-size: 0.875rem;
+
+    .btn {
+      display: inline-block;
+      width: 100%;
       text-align: center;
-      display: none;
+      background-color: var(--azion-orange);
+      color: white;
+      text-decoration: none;
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: background-color 0.2s ease;
     }
-    .success {
-      background: #065f46;
-      color: #34d399;
+
+    .btn:hover {
+      background-color: #d85418;
     }
-    .error {
-      background: #991b1b;
-      color: #fca5a5;
+
+    .btn-secondary {
+      background-color: var(--azion-dark);
+    }
+
+    .btn-secondary:hover {
+      background-color: #333;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 4rem;
+      padding: 2rem 1.5rem;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      border-top: 1px solid var(--card-border);
+      background-color: white;
     }
   </style>
 </head>
 <body>
 
-  <div class="card">
-    <h2>Migrador de DNS</h2>
-    <p>Exporte registros da Cloudflare e importe diretamente na Azion</p>
+  <header>
+    <h1>Azion Implementation Portal</h1>
+    <p>Hub de Automações e Migração para Solutions Engineering, Parceiros e Clientes</p>
+  </header>
 
-    <form id="dnsForm">
-      <div class="form-group">
-        <label for="cf_token">Cloudflare Token</label>
-        <input type="password" id="cf_token" required placeholder="Bearer Token" autocomplete="off" />
-      </div>
+  <main>
+    <section class="intro">
+      <h2>🚀 Aceleração do Setup de Onboarding</h2>
+      <p>Utilize as automações oficiais para reduzir o tempo de migração de DNS e infraestrutura. Nossas ferramentas aceleram a transferência de zonas complexas em segundos, eliminando o trabalho manual e reduzindo a taxa de insucesso no Go-Live.</p>
+    </section>
 
-      <div class="form-group">
-        <label for="cf_zone_id">Cloudflare Zone ID</label>
-        <input type="text" id="cf_zone_id" required placeholder="32 caracteres hex" />
-      </div>
-
-      <div class="form-group">
-        <label for="azion_token">Azion Token</label>
-        <input type="password" id="azion_token" required placeholder="TOKEN azion..." autocomplete="off" />
-      </div>
-
-      <div class="form-group">
-        <label for="azion_zone_id">Azion Zone ID</label>
-        <input type="text" id="azion_zone_id" required placeholder="Ex: 7204" />
-      </div>
-
-      <button type="submit" id="btnSubmit">Iniciar Migração</button>
-    </form>
-
-    <div id="status"></div>
-  </div>
-
-  <script>
-    const N8N_WEBHOOK_URL = "https://n8n-revops.azion.net/webhook/6b69357c-6d77-47f9-84c9-2658528cd542";
-
-    document.getElementById("dnsForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
+    <!-- MENU 1: MIGRAÇÃO VIA API / CLOUDFLARE -->
+    <h3 class="section-title">⚡ Automações Direct Cloudflare & Provisoning</h3>
+    <section class="grid">
       
-      const btn = document.getElementById("btnSubmit");
-      const status = document.getElementById("status");
+      <!-- Card 1: Importador Direct Cloudflare -->
+      <article class="card">
+        <div>
+          <div class="card-header">
+            <span class="badge">Self-Service</span>
+            <h4 class="card-title">Cloudflare DNS Import Tool</h4>
+          </div>
+          <p class="card-description">
+            Interface para leitura e migração de registros de DNS da Cloudflare com autonomia para o próprio cliente.
+          </p>
+          <ul class="feature-list">
+            <li>Migração massiva de zonas em poucos segundos</li>
+            <li>Self-service: o cliente realiza sem expor credenciais sensíveis</li>
+            <li>Validação e mapeamento automatizado de entradas</li>
+          </ul>
+        </div>
+        <a href="https://cfmigrationdns.azion.app/index.html" target="_blank" rel="noopener" class="btn">
+          Acessar Importador de DNS ↗
+        </a>
+      </article>
 
-      btn.disabled = true;
-      btn.innerText = "Processando migração...";
-      status.style.display = "none";
+      <!-- Card 2: Automação Total n8n -->
+      <article class="card">
+        <div>
+          <div class="card-header">
+            <span class="badge badge-blue">Orquestrador API</span>
+            <h4 class="card-title">Provisionamento de Infraestrutura (Proxy / Workloads)</h4>
+          </div>
+          <p class="card-description">
+            Crie automaticamente Connectors, Edge Applications e Workloads agrupados por destino no ambiente Azion.
+          </p>
+          <ul class="feature-list">
+            <li>Deduplicação automática por Target Content</li>
+            <li>Clona a Edge Application base e vincula os domínios</li>
+            <li>Gera relatório em PDF para evidência de entrega</li>
+          </ul>
+        </div>
+        <a href="https://cfmigrationdns.azion.app/cfproxyimport" target="_blank" rel="noopener" class="btn btn-secondary">
+          Iniciar Import / Migração ↗
+        </a>
+      </article>
 
-      const payload = {
-        "Cloudflare Token": document.getElementById("cf_token").value.trim(),
-        "Cloudflare Zone ID": document.getElementById("cf_zone_id").value.trim(),
-        "Azion Token": document.getElementById("azion_token").value.trim(),
-        "Azion Zone ID": document.getElementById("azion_zone_id").value.trim()
-      };
+    </section>
 
-      try {
-        const response = await fetch(N8N_WEBHOOK_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
+    <!-- MENU 2: NOVO MENU DE IMPORTAÇÃO BIND DNS (AKAMAI, BIND9, ROUTE53, ETC) -->
+    <h3 class="section-title">📂 Automações por Arquivo (BIND Zone File)</h3>
+    <section class="grid">
 
-        if (response.ok) {
-          status.className = "success";
-          status.innerText = "🚀 Migração enviada para o n8n com sucesso!";
-        } else {
-          throw new Error("Erro na resposta do servidor.");
-        }
-      } catch (err) {
-        status.className = "error";
-        status.innerText = "❌ Falha ao acionar a migração. Verifique os dados fornecidos.";
-      } finally {
-        status.style.display = "block";
-        btn.disabled = false;
-        btn.innerText = "Iniciar Migração";
-      }
-    });
-  </script>
+      <!-- Card 3: Importador de Arquivo BIND -->
+      <article class="card">
+        <div>
+          <div class="card-header">
+            <span class="badge">Multi-Provider</span>
+            <h4 class="card-title">BIND DNS Zone File Import</h4>
+          </div>
+          <p class="card-description">
+            Importe arquivos de zona padrão BIND (.zone, .txt, .dns) exportados de provedores como Akamai Edge DNS, Route53, BIND9 ou Windows Server.
+          </p>
+          
+          <div class="notes-box">
+            <strong>💡 Vantagens Principais:</strong>
+            • <strong>Independência de API:</strong> Não exige Tokens de acesso ao provedor de origem.<br>
+            • <strong>Compatibilidade Universal:</strong> Suporta o padrão RFC BIND usado por Akamai, AWS e DNSs On-Premise.<br>
+            • <strong>High-Volume:</strong> Processa centenas de registros em um único upload.
+          </div>
+
+          <ul class="feature-list">
+            <li>Parse automático de registros A, CNAME, TXT, MX e SRV</li>
+            <li>Higienização e validação de síntaxe pré-importação</li>
+            <li>Ideal para cenários com travas rígidas de segurança/compliance</li>
+          </ul>
+        </div>
+        <a href="https://cfmigrationdns.azion.app/migrabind.html" target="_blank" rel="noopener" class="btn">
+          Acessar Importador BIND ↗
+        </a>
+      </article>
+
+    </section>
+  </main>
+
+  <footer>
+    <p>Azion Solutions Engineering Team &bull; 2026</p>
+  </footer>
+
 </body>
 </html>
