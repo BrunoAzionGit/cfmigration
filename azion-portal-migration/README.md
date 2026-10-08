@@ -5,7 +5,8 @@ Este repositório contém a estrutura pronta para deploy estático no **Azion Co
 ## Arquivos do Projeto
 
 - `index.html`: Portal principal contendo os links para os importadores.
-- `gemini-code-1785458000658.html`: Formulário de importação de arquivo BIND DNS.
+- `bind-import.html`: Formulário de importação de arquivo BIND DNS.
+- `gemini-code-1785458000658.html`: Redirecionamento do nome antigo para `bind-import.html`.
 - `cf-migration-index.html`: Formulário de automação Cloudflare -> Azion.
 
 ## Configuração de Deploy na Azion
