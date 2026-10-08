@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Automação Cloudflare -> Azion</title>
+  <title>Importar Arquivo BIND -> Azion</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -87,6 +87,13 @@
       margin-left: 2px;
     }
 
+    .form-hint {
+      display: block;
+      font-size: 0.8rem;
+      color: #64748b;
+      margin-top: 6px;
+    }
+
     .form-control {
       width: 100%;
       padding: 12px 14px;
@@ -102,6 +109,12 @@
     .form-control:focus {
       border-color: #f36523;
       box-shadow: 0 0 0 3px rgba(243, 101, 35, 0.15);
+    }
+
+    .form-control[type="file"] {
+      padding: 10px 12px;
+      background-color: #f8fafc;
+      cursor: pointer;
     }
 
     .btn-submit {
@@ -153,6 +166,8 @@
       margin-top: 20px;
       display: none;
       line-height: 1.4;
+      white-space: pre-wrap;
+      word-break: break-word;
     }
 
     .alert-success {
@@ -174,114 +189,121 @@
     <a href="index.html" class="back-link">← Voltar ao Portal</a>
 
     <div class="header">
-      <h1>Automação Cloudflare -> Azion</h1>
-      <p>Insira as credenciais e IDs para executar a sincronização de Conectores, Applications e Workloads.</p>
+      <h1>Importar Arquivo BIND</h1>
+      <p>Envie um zone file padrão BIND para importar os registros na sua zona do Azion Edge DNS.</p>
     </div>
 
-    <form id="migrationForm">
+    <form id="bindForm">
       <div class="form-group">
-        <label for="cloudflare_zone_id">Cloudflare Zone ID <span class="required">*</span></label>
-        <input 
-          type="text" 
-          id="cloudflare_zone_id" 
-          name="Cloudflare Zone ID" 
-          class="form-control" 
-          placeholder="Ex: 023e105f4ecef8ad9ca31a8372d0c353" 
-          required 
+        <label for="azionToken">Azion Token <span class="required">*</span></label>
+        <input
+          type="password"
+          id="azionToken"
+          class="form-control"
+          placeholder="Insira o seu token da Azion"
+          autocomplete="off"
+          required
         />
       </div>
 
       <div class="form-group">
-        <label for="cloudflare_token">Cloudflare Token <span class="required">*</span></label>
-        <input 
-          type="password" 
-          id="cloudflare_token" 
-          name="Cloudflare Token" 
-          class="form-control" 
-          placeholder="Insira o seu token da Cloudflare" 
-          required 
+        <label for="zoneId">Zone ID <span class="required">*</span></label>
+        <input
+          type="text"
+          id="zoneId"
+          class="form-control"
+          placeholder="ID da zona de DNS na Azion"
+          required
         />
       </div>
 
       <div class="form-group">
-        <label for="azion_token">Azion Token <span class="required">*</span></label>
-        <input 
-          type="password" 
-          id="azion_token" 
-          name="Azion Token" 
-          class="form-control" 
-          placeholder="Insira o seu token da Azion" 
-          required 
+        <label for="bindFile">Arquivo BIND <span class="required">*</span></label>
+        <input
+          type="file"
+          id="bindFile"
+          class="form-control"
+          accept=".txt,.zone,.bind,.dns"
+          required
         />
-      </div>
-
-      <div class="form-group">
-        <label for="azion_edge_app_id">Azion Base Edge App ID (Origin) <span class="required">*</span></label>
-        <input 
-          type="text" 
-          id="azion_edge_app_id" 
-          name="Azion Base Edge App ID (Origin)" 
-          class="form-control" 
-          placeholder="Ex: 12345" 
-          required 
-        />
+        <span class="form-hint">Formatos aceitos: .zone, .txt, .bind, .dns</span>
       </div>
 
       <button type="submit" id="submitBtn" class="btn-submit">
         <span class="spinner" id="btnSpinner"></span>
-        <span id="btnText">Submit</span>
+        <span id="btnText">Enviar Registros</span>
       </button>
     </form>
 
     <div id="alertSuccess" class="alert alert-success">
-      ✅ Requisição enviada! A sincronização foi disparada no n8n.
+      ✅ Import submetido com sucesso! Verifique os registros importados no Edge DNS.
     </div>
 
-    <div id="alertError" class="alert alert-error">
-      ❌ Ocorreu um erro ao enviar a requisição. Tente novamente.
-    </div>
+    <div id="alertError" class="alert alert-error"></div>
   </div>
 
   <script>
-    const N8N_FORM_URL = "https://n8n-revops.azion.net/form/920f753d-fe17-48fe-863c-ac7bf11863a8";
+    // Proxy no domínio do portal (functions/migration-proxy.js), que adiciona a chave do webhook.
+    const WEBHOOK_URL = '/api/bind-import';
 
-    const form = document.getElementById('migrationForm');
+    const form = document.getElementById('bindForm');
     const submitBtn = document.getElementById('submitBtn');
     const btnSpinner = document.getElementById('btnSpinner');
     const btnText = document.getElementById('btnText');
     const alertSuccess = document.getElementById('alertSuccess');
     const alertError = document.getElementById('alertError');
 
-    form.addEventListener('submit', async function(e) {
+    function showError(message) {
+      alertError.textContent = '❌ ' + message;
+      alertError.style.display = 'block';
+    }
+
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
       alertSuccess.style.display = 'none';
       alertError.style.display = 'none';
 
+      const azionToken = document.getElementById('azionToken').value.trim();
+      const zoneId = document.getElementById('zoneId').value.trim();
+      const fileInput = document.getElementById('bindFile');
+
+      if (!fileInput.files.length) {
+        showError('Selecione um arquivo BIND.');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('bindFile', fileInput.files[0]);
+      formData.append('azionToken', azionToken);
+      formData.append('zoneId', zoneId);
+
       submitBtn.disabled = true;
       btnSpinner.style.display = 'inline-block';
-      btnText.textContent = 'Processando...';
-
-      const formData = new FormData(form);
+      btnText.textContent = 'Enviando...';
 
       try {
-        // Envio único em 'no-cors': o n8n recebe a requisição mesmo sem headers CORS.
-        // A resposta é opaca, então só detectamos falhas de rede (sem reenvio automático,
-        // para não disparar a migração duas vezes).
-        await fetch(N8N_FORM_URL, {
+        const response = await fetch(WEBHOOK_URL, {
           method: 'POST',
-          body: formData,
-          mode: 'no-cors'
+          body: formData
         });
 
-        alertSuccess.style.display = 'block';
-        form.reset();
-      } catch (error) {
-        alertError.style.display = 'block';
+        if (response.ok) {
+          alertSuccess.style.display = 'block';
+          form.reset();
+        } else {
+          // Erros do proxy vêm em texto; os do n8n, em JSON.
+          const raw = await response.text().catch(() => '');
+          let detail = raw;
+          try { detail = JSON.stringify(JSON.parse(raw), null, 2); } catch (_) {}
+          showError(`Erro (${response.status}): ` + (detail || response.statusText));
+        }
+      } catch (err) {
+        showError('Erro de comunicação com o serviço de importação: ' + err.message);
       } finally {
         submitBtn.disabled = false;
         btnSpinner.style.display = 'none';
-        btnText.textContent = 'Submit';
+        btnText.textContent = 'Enviar Registros';
       }
     });
   </script>
