@@ -1,5 +1,5 @@
 // Azion Function: proxy autenticado entre os formulários do portal e os webhooks do n8n.
-// O front chama só https://toolkit-migration.azion.app/api/...; o domínio do n8n e a chave
+// O front chama só /api/... no domínio do portal; o domínio do n8n e a chave
 // ficam nas variáveis de ambiente da Azion e nunca chegam ao navegador.
 //
 // Variáveis de ambiente (Azion Console > Environment Variables):
