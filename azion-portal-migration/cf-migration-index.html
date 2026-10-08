@@ -234,7 +234,7 @@
     </form>
 
     <div id="alertSuccess" class="alert alert-success">
-      ✅ Sincronização iniciada com sucesso!
+      ✅ Requisição enviada! A sincronização foi disparada no n8n.
     </div>
 
     <div id="alertError" class="alert alert-error">
@@ -265,59 +265,25 @@
       const formData = new FormData(form);
 
       try {
-        const response = await fetch(N8N_FORM_URL, {
+        // Envio único em 'no-cors': o n8n recebe a requisição mesmo sem headers CORS.
+        // A resposta é opaca, então só detectamos falhas de rede (sem reenvio automático,
+        // para não disparar a migração duas vezes).
+        await fetch(N8N_FORM_URL, {
           method: 'POST',
           body: formData,
-          mode: 'cors'
+          mode: 'no-cors'
         });
 
-        if (response.ok || response.type === 'opaque') {
-          alertSuccess.style.display = 'block';
-          form.reset();
-        } else {
-          throw new Error('Erro na resposta do n8n.');
-        }
+        alertSuccess.style.display = 'block';
+        form.reset();
       } catch (error) {
-        submitViaHiddenForm(formData);
+        alertError.style.display = 'block';
       } finally {
         submitBtn.disabled = false;
         btnSpinner.style.display = 'none';
         btnText.textContent = 'Submit';
       }
     });
-
-    function submitViaHiddenForm(formData) {
-      const iframeName = 'hidden_n8n_iframe';
-      let iframe = document.getElementById(iframeName);
-      
-      if (!iframe) {
-        iframe = document.createElement('iframe');
-        iframe.name = iframeName;
-        iframe.id = iframeName;
-        iframe.style.display = 'none';
-        document.body.appendChild(iframe);
-      }
-
-      const tempForm = document.createElement('form');
-      tempForm.method = 'POST';
-      tempForm.action = N8N_FORM_URL;
-      tempForm.target = iframeName;
-
-      for (let [key, value] of formData.entries()) {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = key;
-        input.value = value;
-        tempForm.appendChild(input);
-      }
-
-      document.body.appendChild(tempForm);
-      tempForm.submit();
-      document.body.removeChild(tempForm);
-
-      alertSuccess.style.display = 'block';
-      form.reset();
-    }
   </script>
 </body>
 </html>
