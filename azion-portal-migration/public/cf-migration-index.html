@@ -234,16 +234,17 @@
     </form>
 
     <div id="alertSuccess" class="alert alert-success">
-      ✅ Requisição enviada! A sincronização foi disparada no n8n.
+      ✅ Sincronização concluída. <a id="reportLink" href="#" target="_blank" rel="noopener">Abrir relatório</a>
     </div>
 
     <div id="alertError" class="alert alert-error">
-      ❌ Ocorreu um erro ao enviar a requisição. Tente novamente.
+      ❌ <span id="alertErrorText">Ocorreu um erro ao enviar a requisição. Tente novamente.</span>
     </div>
   </div>
 
   <script>
-    const N8N_FORM_URL = "https://n8n-revops.azion.net/form/920f753d-fe17-48fe-863c-ac7bf11863a8";
+    // Proxy no domínio do portal (functions/migration-proxy.js), que adiciona a chave do webhook.
+    const MIGRATION_API_URL = "https://toolkit-migration.azion.app/api/cf-migration";
 
     const form = document.getElementById('migrationForm');
     const submitBtn = document.getElementById('submitBtn');
@@ -251,6 +252,14 @@
     const btnText = document.getElementById('btnText');
     const alertSuccess = document.getElementById('alertSuccess');
     const alertError = document.getElementById('alertError');
+    const alertErrorText = document.getElementById('alertErrorText');
+    const reportLink = document.getElementById('reportLink');
+
+    const ERROR_MESSAGES = {
+      401: 'Acesso não autorizado ao serviço de migração.',
+      403: 'Acesso não autorizado ao serviço de migração.',
+      502: 'Não foi possível contatar o serviço de migração.',
+    };
 
     form.addEventListener('submit', async function(e) {
       e.preventDefault();
@@ -265,18 +274,23 @@
       const formData = new FormData(form);
 
       try {
-        // Envio único em 'no-cors': o n8n recebe a requisição mesmo sem headers CORS.
-        // A resposta é opaca, então só detectamos falhas de rede (sem reenvio automático,
-        // para não disparar a migração duas vezes).
-        await fetch(N8N_FORM_URL, {
+        const response = await fetch(MIGRATION_API_URL, {
           method: 'POST',
-          body: formData,
-          mode: 'no-cors'
+          body: formData
         });
+        const body = await response.text();
+
+        if (!response.ok) {
+          throw new Error(ERROR_MESSAGES[response.status] || `Erro ${response.status} ao executar a sincronização.`);
+        }
+
+        if (reportLink.href.startsWith('blob:')) URL.revokeObjectURL(reportLink.href);
+        reportLink.href = URL.createObjectURL(new Blob([body], { type: 'text/html' }));
 
         alertSuccess.style.display = 'block';
         form.reset();
       } catch (error) {
+        alertErrorText.textContent = error.message || 'Ocorreu um erro ao enviar a requisição. Tente novamente.';
         alertError.style.display = 'block';
       } finally {
         submitBtn.disabled = false;

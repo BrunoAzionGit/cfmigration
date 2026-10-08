@@ -243,7 +243,8 @@
   </div>
 
   <script>
-    const WEBHOOK_URL = 'https://enktjce9wes.map.azionedge.net/webhook/bind-to-azion';
+    // Proxy no domínio do portal (functions/migration-proxy.js), que adiciona a chave do webhook.
+    const WEBHOOK_URL = 'https://toolkit-migration.azion.app/api/bind-import';
 
     const form = document.getElementById('bindForm');
     const submitBtn = document.getElementById('submitBtn');
@@ -291,11 +292,14 @@
           alertSuccess.style.display = 'block';
           form.reset();
         } else {
-          const result = await response.json().catch(() => ({}));
-          showError(`Erro (${response.status}): ` + JSON.stringify(result, null, 2));
+          // Erros do proxy vêm em texto; os do n8n, em JSON.
+          const raw = await response.text().catch(() => '');
+          let detail = raw;
+          try { detail = JSON.stringify(JSON.parse(raw), null, 2); } catch (_) {}
+          showError(`Erro (${response.status}): ` + (detail || response.statusText));
         }
       } catch (err) {
-        showError('Erro de comunicação com o webhook: ' + err.message);
+        showError('Erro de comunicação com o serviço de importação: ' + err.message);
       } finally {
         submitBtn.disabled = false;
         btnSpinner.style.display = 'none';
